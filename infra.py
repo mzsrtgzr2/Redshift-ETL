@@ -13,6 +13,7 @@ DB_PASSWORD=config.get("CLUSTER","DB_PASSWORD")
 DB_PORT=config.get("CLUSTER","DB_PORT")
 IAM_NAME = config.get("IAM_ROLE","NAME")
 
+print('db user id',  DB_USER)
 
 redshift_role = aws.iam.Role(IAM_NAME,
     assume_role_policy=json.dumps({
