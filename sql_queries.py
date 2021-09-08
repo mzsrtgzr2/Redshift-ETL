@@ -144,6 +144,9 @@ region 'us-west-2'
 iam_role '{iam_role}'
 timeformat as 'epochmillisecs'
 json {json_path}
+BLANKSASNULL 
+TRIMBLANKS
+TRUNCATECOLUMNS
 """).format(
     db=STAGING_EVENTS,
     json_data=LOG_DATA,
@@ -157,9 +160,12 @@ from {json_data}
 region 'us-west-2'
 iam_role '{iam_role}'
 json 'auto'
+BLANKSASNULL 
+TRIMBLANKS
+TRUNCATECOLUMNS
 """).format(
     db=STAGING_SONGS,
-    json_data=LOG_DATA,
+    json_data=SONG_DATA,
     iam_role=IAM_ROLE
 )
 
@@ -170,21 +176,22 @@ INSERT INTO {SONGPLAYS}
 (start_time, user_id, level, song_id, artist_id, session_id, location, user_agent)
 SELECT e.ts, e.userId, e.level, s.song_id, s.artist_id, e.sessionId, e.location, e.userAgent
 FROM {STAGING_EVENTS} as e
-JOIN {STAGING_SONGS} as s ON e.song=s.title
+JOIN {STAGING_SONGS} as s ON e.song=s.title 
+WHERE e.page='NextSong'
 """)
 
 user_table_insert = (f"""
 INSERT INTO {USERS}
 (user_id, first_name, last_name, gender, level)
-SELECT e.userId, e.firstName, e.lastName, e.gender, e.level
+SELECT DISTINCT e.userId, e.firstName, e.lastName, e.gender, e.level
 FROM {STAGING_EVENTS} as e
-WHERE e.userId IS NOT NULL
+WHERE e.userId IS NOT NULL AND e.page='NextSong'
 """)
 
 song_table_insert = (f"""
 INSERT INTO {SONGS}
 (song_id, title, artist_id, year, duration)
-SELECT song_id, title, artist_id, year, duration
+SELECT DISTINCT song_id, title, artist_id, year, duration
 FROM {STAGING_SONGS}
 WHERE song_id IS NOT NULL
 """)
@@ -209,6 +216,34 @@ SELECT
     extract(year from ts),
     extract(weekday from ts)
 FROM {STAGING_EVENTS}
+WHERE page='NextSong'
+""")
+
+# READ DATA
+songplay_table_select = (f"""
+SELECT start_time, user_id, level, song_id, artist_id, session_id, location, user_agent
+FROM {SONGPLAYS} LIMIT 10
+""")
+
+user_table_select = (f"""
+SELECT user_id, first_name, last_name, gender, level
+FROM {USERS} LIMIT 10
+""")
+
+
+song_table_select = (f"""
+SELECT song_id, title, artist_id, year, duration
+FROM {SONGS} LIMIT 10
+""")
+
+artist_table_select = (f"""
+SELECT artist_id, name, location, latitude, longitude
+FROM {ARTISTS} LIMIT 10
+""")
+
+time_table_select = (f"""
+SELECT start_time, hour, day, week, month, year, weekday
+FROM {TIMES} LIMIT 10
 """)
 
 # QUERY LISTS
@@ -221,6 +256,7 @@ create_table_queries = [
     song_table_create,
     artist_table_create,
     time_table_create]
+
 drop_table_queries = [
     staging_events_table_drop,
     staging_songs_table_drop,
@@ -229,14 +265,24 @@ drop_table_queries = [
     song_table_drop,
     artist_table_drop,
     time_table_drop]
+
 copy_table_queries = [
     staging_events_copy,
     staging_songs_copy
 ]
+
 insert_table_queries = [
     songplay_table_insert,
     user_table_insert,
     song_table_insert,
     artist_table_insert,
     time_table_insert
+]
+
+select_table_queries = [
+    songplay_table_select,
+    user_table_select,
+    song_table_select,
+    artist_table_select,
+    time_table_select
 ]

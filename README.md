@@ -108,6 +108,7 @@ the ARN and HOST should be changed to what was just created by pulumi command.
 ```
 python create_tables.py
 python etl.py
+python test.py
 ```
 
 if there are errors from Redshift, can see them with
