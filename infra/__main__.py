@@ -15,8 +15,6 @@ DB_PORT=int(config.get("CLUSTER","DB_PORT"))
 IAM_ROLE_NAME = config.get("IAM_ROLE","NAME")
 
 
-print('db user id',  DB_USER)
-
 redshift_role = aws.iam.Role(IAM_ROLE_NAME,
     assume_role_policy=json.dumps({
         "Version": "2012-10-17",
