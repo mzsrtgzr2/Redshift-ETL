@@ -176,7 +176,8 @@ INSERT INTO {SONGPLAYS}
 (start_time, user_id, level, song_id, artist_id, session_id, location, user_agent)
 SELECT e.ts, e.userId, e.level, s.song_id, s.artist_id, e.sessionId, e.location, e.userAgent
 FROM {STAGING_EVENTS} as e
-JOIN {STAGING_SONGS} as s ON e.song=s.title 
+JOIN {STAGING_SONGS} as s ON (
+    e.song=s.title AND e.artist=s.artist_name  AND e.length=s.duration)
 WHERE e.page='NextSong'
 """)
 
